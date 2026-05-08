@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/image")
 @Slf4j
 @RequiredArgsConstructor
 public class ImagesController {
@@ -40,8 +40,23 @@ public class ImagesController {
 
         //return ResponseEntity.ok().build();
         return ResponseEntity.created(imageUri).build();
-    }
+        }
+    @GetMapping("{id}")
+    public ResponseEntity<byte[]> getImage(@PathVariable("id") String id){
+        var possibleImage = service.getById(id);
+        if(possibleImage.isEmpty()){
+            return ResponseEntity.notFound().build();
+        }
+        var image = possibleImage.get();
 
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(image.getExtension().getMediaType());
+        headers.setContentLength(image.getSize());
+        // inline; filename="image.PNG"
+        headers.setContentDispositionFormData("inline; filename=\"" + image.getFileName() +  "\"", image.getFileName());
+
+        return new ResponseEntity<>(image.getFile(), headers, HttpStatus.OK);
+    }
     //método que cria a url da imagem
     private URI buildImageURL(Image image) {
         String imagePath = "/"+image.getId();
